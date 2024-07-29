@@ -1,71 +1,60 @@
-# smartodo README
+# smarTODO
 
-This is the README for your extension "smartodo". After writing up a brief description, we recommend including the following sections.
+## Overview
+
+This VSCode extension allows you to manage and visualize TODO tasks within your code files.
 
 ## Features
 
-Describe specific features of your extension including screenshots of your extension in action. Image paths are relative to this README file.
+### Task Syntax
 
-For example if there is an image subfolder under your extension project workspace:
+- **Main Task**: Defined with curly braces.
+  {Task Title}
 
-\!\[feature X\]\(images/feature-x.png\)
+- **Subtasks**: Defined with square brackets.
+  {Task Title}
+  [ ] Subtask 1
+  [X] Subtask 2
+  [] Subtask 3
 
-> Tip: Many popular extensions utilize animations. This is an excellent way to show off your extension! We recommend short, focused animations that are easy to follow.
+### Completion Provider
 
-## Requirements
+- Provides a completion snippet for `{}` and `[]` to quickly insert a new main task template.
 
-If you have any requirements or dependencies, add a section describing those and how to install and configure them.
+## How to Use
 
-## Extension Settings
+1. **Activate the Extension**:
 
-Include if your extension adds any VS Code settings through the `contributes.configuration` extension point.
+- Install the extension in VSCode.
+- Open a file with the .TODO file extension.
 
-For example:
+2. **Add Tasks and Subtasks**:
 
-This extension contributes the following settings:
+- Add main tasks using `{Task Title}` syntax.
+- Add subtasks using `[ ]/[]`, `[X]/[x]` for incomplete and completed tasks respectively.
 
-* `myExtension.enable`: Enable/disable this extension.
-* `myExtension.thing`: Set to `blah` to do something.
+## Future Features
 
-## Known Issues
+1. **Configuration Options**:
 
-Calling out known issues can help limit users opening duplicate issues against your extension.
+- Allow users to customize task and subtask syntax.
+- Add options to change the decoration style (e.g., color, font size).
 
-## Release Notes
+2. **Task Management**:
 
-Users appreciate release notes as you update your extension.
+- Provide a sidebar view for managing tasks and subtasks.
+- Allow users to mark tasks and subtasks as completed directly from the sidebar.
 
-### 1.0.0
+3. **Task Filtering**:
 
-Initial release of ...
+- Add the ability to filter tasks based on their completion status.
+- Provide commands to show only completed or incomplete tasks.
 
-### 1.0.1
+4. **Integration with Other Tools**:
 
-Fixed issue #.
+- Integrate with popular task management tools like Jira, Trello, or GitHub Issues.
+- Sync tasks with these tools for better project management.
 
-### 1.1.0
+## Contact
 
-Added features X, Y, and Z.
-
----
-
-## Following extension guidelines
-
-Ensure that you've read through the extensions guidelines and follow the best practices for creating your extension.
-
-* [Extension Guidelines](https://code.visualstudio.com/api/references/extension-guidelines)
-
-## Working with Markdown
-
-You can author your README using Visual Studio Code. Here are some useful editor keyboard shortcuts:
-
-* Split the editor (`Cmd+\` on macOS or `Ctrl+\` on Windows and Linux).
-* Toggle preview (`Shift+Cmd+V` on macOS or `Shift+Ctrl+V` on Windows and Linux).
-* Press `Ctrl+Space` (Windows, Linux, macOS) to see a list of Markdown snippets.
-
-## For more information
-
-* [Visual Studio Code's Markdown Support](http://code.visualstudio.com/docs/languages/markdown)
-* [Markdown Syntax Reference](https://help.github.com/articles/markdown-basics/)
-
-**Enjoy!**
+For any questions or feedback, please contact me at [jts2052@gmail.com](mailto:jts2052@gmail.com) or [jts11@iu.edu](mailto:jts11@iu.edu).
