@@ -1,0 +1,21 @@
+{
+  "scopeName": "source.todo",
+  "patterns": [
+    {
+      "name": "entity.name.tag.todo",
+      "match": "\\{[^\\}]+\\} \\(\\d+/\\d+\\)"
+    },
+    {
+      "name": "meta.checkbox.todo",
+      "begin": "^\\s*\\[",
+      "end": "\\]",
+      "patterns": [
+        {
+          "name": "constant.language.boolean.todo",
+          "match": "X|\\s"
+        }
+      ]
+    }
+  ],
+  "repository": {}
+}
