@@ -1,72 +1,102 @@
 import * as vscode from "vscode";
 import { Task, SubTask } from "./types/tasks";
 
+const taskDecorationType = vscode.window.createTextEditorDecorationType({
+  after: {
+    margin: "0 0 0 0.25em",
+    color: "gray",
+  },
+});
+
+// TODO: Change this, get data from config file
+const boldAndLargeDecorationType = vscode.window.createTextEditorDecorationType(
+  {
+    rangeBehavior: vscode.DecorationRangeBehavior.ClosedClosed,
+    textDecoration: "font-weight: bold; font-size: 1.2em",
+  }
+);
+
 export function activate(context: vscode.ExtensionContext) {
-  console.log(
-    'Congratulations, your extension "todo-extension" is now active!'
-  );
+  let tasks: { [key: number]: Task } = {};
 
-  // Command to search TODOs
-  let searchTODOCommand = vscode.commands.registerCommand(
-    "extension.searchTODO",
-    () => {
-      const editor = vscode.window.activeTextEditor;
-      if (editor) {
-        const document = editor.document;
-        const text = document.getText();
-        const taskRegex: RegExp = /{([^}]+)}/g;
-        const subTaskRegex: RegExp = /^\s*\[(X|x| )?\]\s*(.*)/gm;
-
-        let taskMatch;
-        let tasks: { [key: number]: Task } = {};
-        let numTasks = 0;
-
-        let overFlowSubTask = null;
-
-        let message = "";
-        let nextMatch = taskRegex.exec(text);
-        while ((taskMatch = nextMatch) !== null) {
-          nextMatch = taskRegex.exec(text);
-          let subtasks: SubTask[] = [];
-
-          let taskEndIndex = nextMatch?.index ?? text.length;
-
-          let subTaskMatch;
-          let nextSubTaskMatch: RegExpExecArray | null =
-            overFlowSubTask ?? subTaskRegex.exec(text);
-
-          while (nextSubTaskMatch && nextSubTaskMatch.index <= taskEndIndex) {
-            overFlowSubTask !== null
-              ? (subTaskMatch = overFlowSubTask)
-              : (subTaskMatch = nextSubTaskMatch);
-            nextSubTaskMatch = subTaskRegex.exec(text);
-            nextSubTaskMatch !== null && nextSubTaskMatch.index > taskEndIndex
-              ? (overFlowSubTask = nextSubTaskMatch)
-              : (overFlowSubTask = null);
-
-            subtasks.push({
-              completed: subTaskMatch[1]?.toLowerCase() === "x" || false,
-              title: subTaskMatch[2].trim(),
-            });
-          }
-
-          tasks[numTasks] = {
-            title: taskMatch[1].trim(),
-            completed: subtasks.filter((st) => st.completed).length,
-            total: subtasks.length,
-            subtasks: subtasks,
-          };
-          message += `${numTasks}. ${tasks[numTasks].title} (${tasks[numTasks].completed}/${tasks[numTasks].total})\n`;
-
-          numTasks++;
-        }
-
-        vscode.window.showInformationMessage(message);
-      }
+  let findAndUpdateTODOs = () => {
+    const editor = vscode.window.activeTextEditor;
+    if (!editor) {
+      return;
     }
-  );
+    const document = editor.document;
+    const text = document.getText();
+    const taskRegex: RegExp = /{([^}]+)}/g;
+    const subTaskRegex: RegExp = /^\s*\[(X|x| )?\]\s*(.*)/gm;
 
-  context.subscriptions.push(searchTODOCommand);
+    let decorations: vscode.DecorationOptions[] = [];
+    let boldAndLargeDecorations: vscode.DecorationOptions[] = [];
+
+    let taskMatch;
+    let numTasks = 0;
+    let overFlowSubTask = null;
+    let nextMatch = taskRegex.exec(text);
+
+    while ((taskMatch = nextMatch) !== null) {
+      const startPos = editor.document.positionAt(taskMatch.index + 1); // Start after the opening bracket
+      const endPos = editor.document.positionAt(
+        taskMatch.index + taskMatch[0].length - 1 // End before the closing bracket
+      );
+
+      nextMatch = taskRegex.exec(text);
+      let subtasks: SubTask[] = [];
+
+      let taskEndIndex = nextMatch?.index ?? text.length;
+
+      let subTaskMatch;
+      let nextSubTaskMatch: RegExpExecArray | null =
+        overFlowSubTask ?? subTaskRegex.exec(text);
+
+      while (nextSubTaskMatch && nextSubTaskMatch.index <= taskEndIndex) {
+        overFlowSubTask !== null
+          ? (subTaskMatch = overFlowSubTask)
+          : (subTaskMatch = nextSubTaskMatch);
+        nextSubTaskMatch = subTaskRegex.exec(text);
+        nextSubTaskMatch !== null && nextSubTaskMatch.index > taskEndIndex
+          ? (overFlowSubTask = nextSubTaskMatch)
+          : (overFlowSubTask = null);
+
+        subtasks.push({
+          completed: subTaskMatch[1]?.toLowerCase() === "x" || false,
+          title: subTaskMatch[2].trim(),
+        });
+      }
+
+      tasks[numTasks] = {
+        title: taskMatch[1].trim(),
+        completed: subtasks.filter((st) => st.completed).length,
+        total: subtasks.length,
+        subtasks: subtasks,
+        startPos: startPos,
+        endPos: endPos,
+      };
+
+      const decoration = {
+        range: new vscode.Range(startPos, endPos),
+        renderOptions: {
+          after: {
+            contentText: ` (${tasks[numTasks].completed}/${tasks[numTasks].total})`,
+          },
+        },
+      };
+      decorations.push(decoration);
+
+      const boldAndLargeDecoration = {
+        range: new vscode.Range(startPos, endPos),
+      };
+      boldAndLargeDecorations.push(boldAndLargeDecoration);
+
+      numTasks++;
+    }
+
+    editor.setDecorations(taskDecorationType, decorations);
+    editor.setDecorations(boldAndLargeDecorationType, boldAndLargeDecorations);
+  };
 
   // Completion provider for {}
   const mainTaskCompletionProvider =
@@ -99,6 +129,7 @@ export function activate(context: vscode.ExtensionContext) {
       "{"
     );
 
+  // Completion provider for []
   const subTaskCompletionProvider =
     vscode.languages.registerCompletionItemProvider(
       "todo",
@@ -135,99 +166,19 @@ export function activate(context: vscode.ExtensionContext) {
     subTaskCompletionProvider
   );
 
-  // Decoration to show completion status
-  const taskDecorationType = vscode.window.createTextEditorDecorationType({
-    after: {
-      margin: "0 0 0 0.25em",
-      color: "gray",
-    },
-  });
-
-  const updateDecorations = () => {
-    const editor = vscode.window.activeTextEditor;
-    if (!editor) {
-      return;
-    }
-
-    const text = editor.document.getText();
-    const taskRegex = /{([^}]+)}/g;
-    const subTaskRegex: RegExp = /^\s*\[(X|x| )?\]\s*(.*)/gm;
-
-    let taskMatch;
-    let decorations: vscode.DecorationOptions[] = [];
-    let tasks: { [key: number]: Task } = {};
-    let numTasks = 0;
-
-    let overFlowSubTask = null;
-
-    let nextMatch = taskRegex.exec(text);
-    while ((taskMatch = nextMatch) !== null) {
-      const startPos = editor.document.positionAt(taskMatch.index);
-      const endPos = editor.document.positionAt(
-        taskMatch.index + taskMatch[0].length
-      );
-
-      nextMatch = taskRegex.exec(text);
-      let subtasks: SubTask[] = [];
-
-      let taskEndIndex = nextMatch?.index ?? text.length;
-
-      let subTaskMatch;
-      let nextSubTaskMatch: RegExpExecArray | null =
-        overFlowSubTask ?? subTaskRegex.exec(text);
-
-      while (nextSubTaskMatch && nextSubTaskMatch.index <= taskEndIndex) {
-        overFlowSubTask !== null
-          ? (subTaskMatch = overFlowSubTask)
-          : (subTaskMatch = nextSubTaskMatch);
-        nextSubTaskMatch = subTaskRegex.exec(text);
-        nextSubTaskMatch !== null && nextSubTaskMatch.index > taskEndIndex
-          ? (overFlowSubTask = nextSubTaskMatch)
-          : (overFlowSubTask = null);
-
-        subtasks.push({
-          completed: subTaskMatch[1]?.toLowerCase() === "x" || false,
-          title: subTaskMatch[2].trim(),
-        });
-      }
-
-      tasks[numTasks] = {
-        title: taskMatch[1].trim(),
-        completed: subtasks.filter((st) => st.completed).length,
-        total: subtasks.length,
-        subtasks: subtasks,
-      };
-
-      const decoration = {
-        range: new vscode.Range(startPos, endPos),
-        renderOptions: {
-          after: {
-            contentText: ` (${tasks[numTasks].completed}/${tasks[numTasks].total})`,
-          },
-        },
-      };
-      decorations.push(decoration);
-
-      numTasks++;
-    }
-
-    // Apply decorations
-    editor.setDecorations(taskDecorationType, decorations);
-  };
-
   vscode.window.onDidChangeActiveTextEditor(
-    updateDecorations,
+    findAndUpdateTODOs,
     null,
     context.subscriptions
   );
   vscode.workspace.onDidChangeTextDocument(
-    updateDecorations,
+    findAndUpdateTODOs,
     null,
     context.subscriptions
   );
 
   if (vscode.window.activeTextEditor) {
-    updateDecorations();
+    findAndUpdateTODOs();
   }
 }
 

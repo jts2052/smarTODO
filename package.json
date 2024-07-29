@@ -2,11 +2,16 @@
   "name": "smartodo",
   "displayName": "smarTODO",
   "description": "Smart TODO management",
-  "version": "0.0.1",
+  "version": "0.0.3",
   "engines": {
     "vscode": "^1.91.0"
   },
   "publisher": "jts2052",
+  "icon": "resources/images/icon.png",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jts2052/smartodo.git"
+  },
   "categories": [
     "Other"
   ],
@@ -24,6 +29,10 @@
       {
         "command": "extension.searchTODO",
         "title": "Search TODOs"
+      },
+      {
+        "command": "extension.openConfig",
+        "title": "Open TODO Customization Config"
       }
     ],
     "languages": [
